@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Démo - Boutique Kente & Co.</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
+        .phone { max-width: 400px; width: 100%; background: #fff; border-radius: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); overflow: hidden; border: 1px solid #e0e0e0; position: relative; }
+        .screen { padding: 20px; display: none; flex-direction: column; min-height: 620px; }
+        .screen.active { display: flex; }
+
+        .status-bar { display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-bottom: 16px; padding: 0 4px; }
+        
+        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .back-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #333; padding: 4px; }
+        .header h2 { font-size: 18px; font-weight: 600; }
+
+        /* Écran 1 : Social */
+        .social-icons { display: flex; gap: 16px; margin: 20px 0; justify-content: center; }
+        .social-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px; border-radius: 16px; border: 1px solid #e0e0e0; cursor: pointer; transition: all 0.2s; flex: 1; background: #fafafa; }
+        .social-btn:hover { background: #f0f0f0; border-color: #ccc; }
+        .social-btn .icon { font-size: 32px; }
+        .social-btn span { font-size: 12px; font-weight: 500; color: #333; }
+        .mock-link { background: #e8f0fe; padding: 12px; border-radius: 8px; font-size: 12px; color: #1a73e8; word-break: break-all; margin: 16px 0; text-align: center; border: 1px dashed #1a73e8; }
+
+        /* Écran 2 : WhatsApp */
+        .chat-header { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee; margin-bottom: 16px; }
+        .avatar { width: 40px; height: 40px; background: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; }
+        .chat-messages { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+        .message { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.4; position: relative; }
+        .message.bot { background: #f0f0f0; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .message.user { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .product-card-wa { background: #fff; border: 1px solid #ddd; border-radius: 12px; overflow: hidden; margin-top: 8px; }
+        .product-img-placeholder { height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; text-align: center; padding: 8px; }
+        .product-info { padding: 10px; }
+        .product-info h4 { font-size: 14px; margin-bottom: 4px; }
+        .product-info .price { font-weight: 700; color: #25D366; font-size: 16px; margin-bottom: 8px; }
+        .wa-btn { display: block; width: 100%; padding: 10px; background: #25D366; color: white; text-align: center; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 14px; }
+
+        /* Écran 3 : Landing Page Produit */
+        .landing-container { flex: 1; display: flex; flex-direction: column; }
+        .landing-img { height: 200px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; margin-bottom: 16px; position: relative; }
+        .badge-promo { position: absolute; top: 12px; right: 12px; background: #ff3b30; color: white; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+        .landing-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+        .landing-rating { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; margin-bottom: 12px; }
+        .stars { color: #ffb400; font-size: 14px; }
+        .landing-price-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .landing-price { font-size: 26px; font-weight: 700; color: #25D366; }
+        .landing-old-price { font-size: 14px; color: #999; text-decoration: line-through; }
+        .landing-desc { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 16px; }
+        .features { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .feature-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #444; }
+        .feature-item .check { color: #25D366; font-weight: bold; }
+
+        .qty-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: #f9f9f9; border-radius: 12px; }
+        .qty-row label { font-size: 14px; font-weight: 600; color: #333; }
+        .qty-controls { display: flex; align-items: center; gap: 12px; }
+        .qty-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #333; }
+        .qty-btn:hover { background: #f0f0f0; }
+        .qty-value { font-size: 16px; font-weight: 700; min-width: 24px; text-align: center; }
+
+        .delivery-section { margin-bottom: 16px; }
+        .delivery-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #333; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #fff; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #25D366; }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+
+        .summary { background: #f9f9f9; padding: 14px; border-radius: 12px; margin-bottom: 16px; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #555; }
+        .summary-row.total { font-weight: 700; color: #333; font-size: 15px; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px; }
+        .summary-row.total .val { color: #25D366; }
+
+        .pay-btn { display: block; width: 100%; padding: 16px; background: #000; color: white; text-align: center; border: none; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: auto; }
+        .pay-btn:hover { background: #222; }
+        .secure-note { text-align: center; font-size: 11px; color: #888; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+
+        /* Écran 4 : FedaPay */
+        .fedapay-header { text-align: center; padding: 16px 0; }
+        .fedapay-logo { font-size: 24px; font-weight: 700; color: #0055ff; margin-bottom: 4px; }
+        .fedapay-amount { font-size: 28px; font-weight: 700; color: #333; margin: 8px 0; }
+        .fedapay-form { display: flex; flex-direction: column; gap: 14px; }
+        .payment-methods { display: flex; gap: 8px; margin-bottom: 8px; }
+        .pm-btn { flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 10px; background: #fff; cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; transition: all 0.2s; }
+        .pm-btn.selected { border-color: #0055ff; background: #f0f5ff; color: #0055ff; }
+        .fedapay-pay-btn { padding: 16px; background: #0055ff; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 8px; }
+        .fedapay-pay-btn:hover { background: #0044cc; }
+        .secure-badge { text-align: center; font-size: 11px; color: #888; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+
+        /* Écran 5 : Confirmation */
+        .success-screen { text-align: center; justify-content: center; align-items: center; flex: 1; }
+        .success-icon { font-size: 64px; margin-bottom: 12px; animation: pop 0.5s ease; }
+        @keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .success-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #25D366; }
+        .success-msg { font-size: 14px; color: #555; margin-bottom: 20px; line-height: 1.5; }
+        .order-details { background: #f9f9f9; padding: 16px; border-radius: 12px; width: 100%; text-align: left; margin-bottom: 16px; font-size: 13px; }
+        .order-details p { margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .order-details strong { color: #333; }
+        .order-details .val { color: #555; text-align: right; }
+        .admin-note { font-size: 11px; color: #555; margin-top: 12px; padding: 10px; background: #f0f7ff; border-radius: 8px; text-align: left; border-left: 3px solid #0055ff; }
+        .admin-note strong { color: #0055ff; }
+
+        /* Écran 6 : Back-Office Admin */
+        .admin-header { background: #1a1a2e; color: white; margin: -20px -20px 16px -20px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .admin-header-left { display: flex; align-items: center; gap: 10px; }
+        .admin-back-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 16px; cursor: pointer; padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; gap: 4px; transition: background 0.2s; }
+        .admin-back-btn:hover { background: rgba(255,255,255,0.25); }
+        .admin-header h2 { font-size: 16px; font-weight: 600; }
+        .admin-badge { font-size: 10px; background: #0055ff; padding: 3px 8px; border-radius: 10px; font-weight: 600; flex-shrink: 0; }
+        
+        .admin-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: #f0f0f0; padding: 4px; border-radius: 10px; }
+        .admin-tab { flex: 1; padding: 8px; border: none; background: none; font-size: 12px; font-weight: 600; color: #666; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+        .admin-tab.active { background: #fff; color: #1a1a2e; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+        .admin-content { flex: 1; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .kpi-card { background: #f9f9f9; padding: 14px; border-radius: 12px; border-left: 3px solid #0055ff; }
+        .kpi-card .kpi-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+        .kpi-card .kpi-value { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+        .kpi-card.green { border-left-color: #25D366; }
+        .kpi-card.orange { border-left-color: #ff9500; }
+        .kpi-card.red { border-left-color: #ff3b30; }
+
+        .section-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 10px; margin-top: 8px; }
+
+        .order-item { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
+        .order-item:hover { border-color: #0055ff; background: #f8faff; }
+        .order-item .order-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .order-item .order-id { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+        .order-item .order-amount { font-size: 14px; font-weight: 700; color: #25D366; }
+        .order-item .order-meta { font-size: 11px; color: #888; display: flex; justify-content: space-between; }
+        .status-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+        .status-badge.paid { background: #e6f9ee; color: #25D366; }
+        .status-badge.pending { background: #fff4e6; color: #ff9500; }
+        .status-badge.shipped { background: #e6f0ff; color: #0055ff; }
+
+        .stock-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; }
+        .stock-img { width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, #f093fb, #f5576c); flex-shrink: 0; }
+        .stock-img.kente { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .stock-img.friandise { background: linear-gradient(135deg, #f6d365, #fda085); }
+        .stock-img.spiritueux { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+        .stock-info { flex: 1; }
+        .stock-info h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+        .stock-info .stock-qty { font-size: 11px; color: #888; }
+        .stock-info .stock-qty.low { color: #ff3b30; font-weight: 600; }
+        .stock-bar { height: 4px; background: #eee; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+        .stock-bar-fill { height: 100%; background: #25D366; border-radius: 2px; }
+        .stock-bar-fill.low { background: #ff3b30; }
+        .stock-bar-fill.mid { background: #ff9500; }
+
+        .detail-section { background: #f9f9f9; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .detail-section h3 { font-size: 12px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .detail-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+        .detail-row .label { color: #888; }
+        .detail-row .value { color: #333; font-weight: 600; text-align: right; }
+        .detail-row.total { border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px; font-weight: 700; }
+        .detail-row.total .value { color: #25D366; font-size: 15px; }
+        .invoice-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 12px; background: #0055ff; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 8px; }
+        .invoice-btn:hover { background: #0044cc; }
+        .timeline { margin-top: 8px; }
+        .timeline-item { display: flex; gap: 10px; padding-bottom: 12px; position: relative; }
+        .timeline-item:last-child { padding-bottom: 0; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: #25D366; flex-shrink: 0; margin-top: 4px; position: relative; z-index: 1; }
+        .timeline-item:not(:last-child) .timeline-dot::after { content: ''; position: absolute; top: 10px; left: 4px; width: 2px; height: 30px; background: #ddd; }
+        .timeline-content { flex: 1; }
+        .timeline-content .tl-title { font-size: 12px; font-weight: 600; color: #333; }
+        .timeline-content .tl-time { font-size: 10px; color: #888; }
+
+        /* Bouton de sortie admin en bas */
+        .admin-exit { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 12px; background: #f0f0f0; color: #555; border: 1px solid #ddd; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 16px; transition: all 0.2s; }
+        .admin-exit:hover { background: #e5e5e5; color: #333; }
+
+        .step-indicator { display: flex; justify-content: center; gap: 6px; margin-top: 16px; }
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; transition: background 0.3s; }
+        .step-dot.active { background: #333; }
+    </style>
+</head>
+<body>
+
+<div class="phone">
+    <div class="status-bar">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+    </div>
+
+    <!-- Écran 1 : Redirection Sociale -->
+    <div class="screen active" id="screen-social">
+        <div class="header">
+            <h2>📱 Découverte</h2>
+        </div>
+        <p style="font-size: 13px; color: #666; margin-bottom: 16px;">Le client voit un post sur les réseaux sociaux et clique sur le lien en bio.</p>
+        <div class="social-icons">
+            <div class="social-btn" onclick="goTo('screen-whatsapp')">
+                <div class="icon">📘</div>
+                <span>Facebook</span>
+            </div>
+            <div class="social-btn" onclick="goTo('screen-whatsapp')">
+                <div class="icon">🎵</div>
+                <span>TikTok</span>
+            </div>
+        </div>
+        <div class="mock-link">🔗 wa.me/229XXXXXXXX?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20votre%20pagne%20Kente</div>
+        <div class="step-indicator">
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+        </div>
+    </div>
+
+    <!-- Écran 2 : WhatsApp Business -->
+    <div class="screen" id="screen-whatsapp">
+        <div class="header">
+            <button class="back-btn" onclick="goTo('screen-social')">←</button>
+            <h2>WhatsApp Business</h2>
+        </div>
+        <div class="chat-header">
+            <div class="avatar">K</div>
+            <div>
+                <div style="font-weight: 600; font-size: 14px;">Kente & Co.</div>
+                <div style="font-size: 11px; color: #25D366;">En ligne</div>
+            </div>
+        </div>
+        <div class="chat-messages">
+            <div class="message bot">
+                Bonjour ! 👋 Merci de nous avoir contactés via notre page. Voici notre produit phare :
+                <div class="product-card-wa">
+                    <div class="product-img-placeholder">Pagne Kente Royal</div>
+                    <div class="product-info">
+                        <h4>Pagne Kente Royal - Édition Limitée</h4>
+                        <div class="price">25 000 FCFA</div>
+                        <button class="wa-btn" onclick="goTo('screen-landing')">Acheter maintenant →</button>
+                    </div>
+                </div>
+            </div>
+            <div class="message user">
+                Super, je veux l'acheter !
+            </div>
+        </div>
+        <div class="step-indicator">
+            <div class="step-dot"></div>
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+        </div>
+    </div>
+
+    <!-- Écran 3 : Landing Page Produit -->
+    <div class="screen" id="screen-landing">
+        <div class="header">
+            <button class="back-btn" onclick="goTo('screen-whatsapp')">←</button>
+            <h2>Boutique Kente & Co.</h2>
+        </div>
+        <div class="landing-container">
+            <div class="landing-img">
+                Pagne Kente Royal
+                <div class="badge-promo">-20%</div>
+            </div>
+            <h1 class="landing-title">Pagne Kente Royal - Édition Limitée</h1>
+            <div class="landing-rating">
+                <span class="stars">★★★★★</span>
+                <span>4.9 (127 avis)</span>
+            </div>
+            <div class="landing-price-row">
+                <span class="landing-price">25 000 FCFA</span>
+                <span class="landing-old-price">31 000 FCFA</span>
+            </div>
+            <p class="landing-desc">
+                Tissé à la main par des artisans talentueux du Bénin. Chaque pièce est unique et raconte une histoire. 
+                Couleurs éclatantes, qualité premium, finitions soignées.
+            </p>
+            <div class="features">
+                <div class="feature-item"><span class="check">✓</span> 100% coton tissé main</div>
+                <div class="feature-item"><span class="check">✓</span> Dimensions : 2m x 1.2m</div>
+                <div class="feature-item"><span class="check">✓</span> Livraison Afrique & monde</div>
+                <div class="feature-item"><span class="check">✓</span> Paiement sécurisé FedaPay</div>
+            </div>
+            <div class="qty-row">
+                <label>Quantité</label>
+                <div class="qty-controls">
+                    <button class="qty-btn" onclick="changeQty(-1)">−</button>
+                    <span class="qty-value" id="qtyValue">1</span>
+                    <button class="qty-btn" onclick="changeQty(1)">+</button>
+                </div>
+            </div>
+            <div class="delivery-section">
+                <h3>📍 Informations de livraison</h3>
+                <div class="form-group">
+                    <label>Nom complet</label>
+                    <input type="text" id="custName" placeholder="Koffi Mensah" value="Koffi Mensah">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Téléphone</label>
+                        <input type="tel" id="custPhone" placeholder="+229 97 00 00 00" value="+229 97 12 34 56">
+                    </div>
+                    <div class="form-group">
+                        <label>Ville</label>
+                        <input type="text" id="custCity" placeholder="Cotonou" value="Cotonou">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Adresse</label>
+                    <input type="text" id="custAddress" placeholder="Rue 123, Quartier..." value="Rue 45, Fidjrossè">
+                </div>
+            </div>
+            <div class="summary">
+                <div class="summary-row">
+                    <span>Sous-total (<span id="summaryQty">1</span> article)</span>
+                    <span id="summarySubtotal">25 000 FCFA</span>
+                </div>
+                <div class="summary-row">
+                    <span>Livraison</span>
+                    <span>2 000 FCFA</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total à payer</span>
+                    <span class="val" id="summaryTotal">27 000 FCFA</span>
+                </div>
+            </div>
+            <button class="pay-btn" onclick="goTo('screen-fedapay')">Payer maintenant →</button>
+            <div class="secure-note">🔒 Paiement 100% sécurisé par FedaPay</div>
+        </div>
+        <div class="step-indicator">
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+        </div>
+    </div>
+
+    <!-- Écran 4 : FedaPay Checkout -->
+    <div class="screen" id="screen-fedapay">
+        <div class="header">
+            <button class="back-btn" onclick="goTo('screen-landing')">←</button>
+            <h2>Paiement sécurisé</h2>
+        </div>
+        <div class="fedapay-header">
+            <div class="fedapay-logo">💳 FedaPay</div>
+            <p style="font-size: 12px; color: #666;">Montant à régler</p>
+            <div class="fedapay-amount" id="fedapayAmount">27 000 FCFA</div>
+        </div>
+        <div class="fedapay-form">
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px;">Moyen de paiement</label>
+                <div class="payment-methods">
+                    <div class="pm-btn selected" onclick="selectPM(this)">📱 Mobile Money</div>
+                    <div class="pm-btn" onclick="selectPM(this)">💳 Carte</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nom complet</label>
+                <input type="text" id="payName" placeholder="Koffi Mensah" value="Koffi Mensah">
+            </div>
+            <div class="form-group">
+                <label>Numéro de téléphone (Mobile Money)</label>
+                <input type="tel" id="payPhone" placeholder="+229 97 00 00 00" value="+229 97 12 34 56">
+            </div>
+            <div class="form-group">
+                <label>Email (pour le reçu)</label>
+                <input type="email" id="payEmail" placeholder="koffi@example.com" value="koffi@example.com">
+            </div>
+            <button class="fedapay-pay-btn" onclick="confirmPayment()">Payer <span id="payBtnAmount">27 000 FCFA</span></button>
+            <div class="secure-badge">🔒 Transaction cryptée SSL</div>
+        </div>
+        <div class="step-indicator">
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+        </div>
+    </div>
+
+    <!-- Écran 5 : Confirmation -->
+    <div class="screen" id="screen-success">
+        <div class="success-screen">
+            <div class="success-icon">✅</div>
+            <h1 class="success-title">Paiement réussi !</h1>
+            <p class="success-msg">Merci <span id="successName">Koffi</span> ! Votre commande a bien été enregistrée.</p>
+            
+            <div class="order-details">
+                <p><strong>Commande</strong> <span class="val">#CMD-2024-001</span></p>
+                <p><strong>Produit</strong> <span class="val">Pagne Kente Royal</span></p>
+                <p><strong>Quantité</strong> <span class="val" id="successQty">1</span></p>
+                <p><strong>Total payé</strong> <span class="val" id="successTotal">27 000 FCFA</span></p>
+                <p><strong>Statut</strong> <span class="val" style="color:#25D366; font-weight:700;">Payé ✅</span></p>
+                <p><strong>Livraison</strong> <span class="val">Cotonou, 48h</span></p>
+            </div>
+            
+            <div style="display: flex; gap: 10px; width: 100%; flex-wrap: wrap;">
+                <button class="wa-btn" style="flex: 1; background: #25D366; min-width: 140px;" onclick="goTo('screen-whatsapp')">Retour WhatsApp</button>
+                <button class="wa-btn" style="flex: 1; background: #1a1a2e; min-width: 140px;" onclick="goTo('screen-admin')">🛠️ Back-Office Admin</button>
+            </div>
+            <button class="wa-btn" style="background: #666; margin-top: 10px;" onclick="resetDemo()">Rejouer la démo</button>
+            
+            <div class="admin-note">
+                💡 <strong>Automatisation déclenchée :</strong><br>
+                ✓ Webhook FedaPay reçu<br>
+                ✓ Stock mis à jour (−1)<br>
+                ✓ Facture PDF générée<br>
+                ✓ Notification admin envoyée<br>
+                ✓ Confirmation WhatsApp au client
+            </div>
+        </div>
+        <div class="step-indicator">
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot active"></div>
+        </div>
+    </div>
+
+    <!-- Écran 6 : Back-Office Admin -->
+    <div class="screen" id="screen-admin">
+        <div class="admin-header">
+            <div class="admin-header-left">
+                <button class="admin-back-btn" onclick="goTo('screen-success')" title="Retour à la confirmation">←</button>
+                <h2>🛠️ Espace Marchand</h2>
+            </div>
+            <span class="admin-badge">ADMIN</span>
+        </div>
+
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="showAdminTab('tab-dashboard', this)">📊 Dashboard</button>
+            <button class="admin-tab" onclick="showAdminTab('tab-orders', this)">📦 Commandes</button>
+            <button class="admin-tab" onclick="showAdminTab('tab-stock', this)">📊 Stock</button>
+        </div>
+
+        <div class="admin-content">
+            <!-- Onglet Dashboard -->
+            <div class="tab-panel active" id="tab-dashboard">
+                <div class="kpi-grid">
+                    <div class="kpi-card green">
+                        <div class="kpi-label">Ventes du jour</div>
+                        <div class="kpi-value">127 000 F</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Commandes</div>
+                        <div class="kpi-value">8</div>
+                    </div>
+                    <div class="kpi-card orange">
+                        <div class="kpi-label">En attente</div>
+                        <div class="kpi-value">2</div>
+                    </div>
+                    <div class="kpi-card red">
+                        <div class="kpi-label">Stock faible</div>
+                        <div class="kpi-value">1</div>
+                    </div>
+                </div>
+
+                <div class="section-title">🔔 Dernières commandes</div>
+                <div class="order-item" onclick="openOrderDetail('CMD-2024-001')">
+                    <div class="order-top">
+                        <span class="order-id">#CMD-2024-001</span>
+                        <span class="order-amount">27 000 FCFA</span>
+                    </div>
+                    <div class="order-meta">
+                        <span>Koffi Mensah · Pagne Kente</span>
+                        <span class="status-badge paid">Payé</span>
+                    </div>
+                </div>
+                <div class="order-item" onclick="openOrderDetail('CMD-2024-002')">
+                    <div class="order-top">
+                        <span class="order-id">#CMD-2024-002</span>
+                        <span class="order-amount">15 000 FCFA</span>
+                    </div>
+                    <div class="order-meta">
+                        <span>Awa Diallo · Friandises</span>
+                        <span class="status-badge paid">Payé</span>
+                    </div>
+                </div>
+                <div class="order-item" onclick="openOrderDetail('CMD-2024-003')">
+                    <div class="order-top">
+                        <span class="order-id">#CMD-2024-003</span>
+                        <span class="order-amount">45 000 FCFA</span>
+                    </div>
+                    <div class="order-meta">
+                        <span>Jean Dupont · Spiritueux</span>
+                        <span class="status-badge pending">En attente</span>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 16px;">⚡ Alertes stock</div>
+                <div class="stock-item">
+                    <div class="stock-img kente"></div>
+                    <div class="stock-info">
+                        <h4>Pagne Kente Royal</h4>
+                        <div class="stock-qty low">⚠️ 3 restants</div>
+                        <div class="stock-bar"><div class="stock-bar-fill low" style="width: 15%;"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Commandes -->
+            <div class="tab-panel" id="tab-orders">
+                <div class="section-title">Toutes les commandes</div>
+                <div class="order-item" onclick="openOrderDetail('CMD-2024-001')">
+                    <div class="order-top">
+                        <span class="order-id">#CMD-2024-001</span>
+                        <span class="order-amount">27 000 FCFA</span>
+                    </div>
+                    <div class="order-meta">
+                        <span>Koffi Mensah · 13/11/2026</span>
+                        <span class="status-badge paid">Payé</span>
+                    </div>
+                </div>
+                <div class="order-item" onclick="openOrderDetail('CMD-2024-002')">
+                    <div class="order-top">
+                        <span class="order-id">#CMD-2024-002</span>
+                        <span class="order-amount">15 000 FCFA</span>
+                    </div>
+                    <div class="order-meta">
+                        <span>Awa Diallo · 13/11/2026</span>
+                        <span class="status-badge paid">Payé</span>
+                    </div>
+                </div>
+                <div class="order-item" onclick="openOrderDetail('CMD-2024-003')">
+                    <div class="order-top">
+                        <span class="order-id">#CMD-2024-003</span>
+                        <span class="order-amount">45 000 FCFA</span>
+                    </div>
+                    <div class="order-meta">
+                        <span>Jean Dupont · 13/11/2026</span>
+                        <span class="status-badge pending">En attente</span>
+                    </div>
+                </div>
+                <div class="order-item" onclick="openOrderDetail('CMD-2024-004')">
+                    <div class="order-top">
+                        <span class="order-id">#CMD-2024-004</span>
+                        <span class="order-amount">52 000 FCFA</span>
+                    </div>
+                    <div class="order-meta">
+                        <span>Fatou Sow · 12/11/2026</span>
+                        <span class="status-badge shipped">Expédié</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Stock -->
+            <div class="tab-panel" id="tab-stock">
+                <div class="section-title">Inventaire produits</div>
+                <div class="stock-item">
+                    <div class="stock-img kente"></div>
+                    <div class="stock-info">
+                        <h4>Pagne Kente Royal</h4>
+                        <div class="stock-qty low">⚠️ 3 restants</div>
+                        <div class="stock-bar"><div class="stock-bar-fill low" style="width: 15%;"></div></div>
+                    </div>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-img"></div>
+                    <div class="stock-info">
+                        <h4>Pagne Kente Classique</h4>
+                        <div class="stock-qty">18 restants</div>
+                        <div class="stock-bar"><div class="stock-bar-fill mid" style="width: 60%;"></div></div>
+                    </div>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-img friandise"></div>
+                    <div class="stock-info">
+                        <h4>Friandises Artisanales</h4>
+                        <div class="stock-qty">42 restants</div>
+                        <div class="stock-bar"><div class="stock-bar-fill" style="width: 85%;"></div></div>
+                    </div>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-img spiritueux"></div>
+                    <div class="stock-info">
+                        <h4>Spiritueux Premium</h4>
+                        <div class="stock-qty">25 restants</div>
+                        <div class="stock-bar"><div class="stock-bar-fill" style="width: 70%;"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Détail commande -->
+            <div class="tab-panel" id="tab-order-detail">
+                <button class="back-btn" style="margin-bottom: 12px;" onclick="showAdminTab('tab-orders', document.querySelectorAll('.admin-tab')[1])">← Retour aux commandes</button>
+                
+                <div class="detail-section">
+                    <h3>Commande <span id="detailOrderId">#CMD-2024-001</span></h3>
+                    <div class="detail-row"><span class="label">Client</span><span class="value" id="detailClient">Koffi Mensah</span></div>
+                    <div class="detail-row"><span class="label">Téléphone</span><span class="value">+229 97 12 34 56</span></div>
+                    <div class="detail-row"><span class="label">Adresse</span><span class="value">Cotonou, Fidjrossè</span></div>
+                    <div class="detail-row"><span class="label">Date</span><span class="value">13/11/2026 · 14:32</span></div>
+                    <div class="detail-row"><span class="label">Statut</span><span class="value" style="color:#25D366;">Payé ✅</span></div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Détails produit</h3>
+                    <div class="detail-row"><span class="label">Pagne Kente Royal × 1</span><span class="value">25 000 FCFA</span></div>
+                    <div class="detail-row"><span class="label">Livraison</span><span class="value">2 000 FCFA</span></div>
+                    <div class="detail-row total"><span class="label">Total payé</span><span class="value" id="detailTotal">27 000 FCFA</span></div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Suivi de la commande</h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <div class="tl-title">✅ Paiement reçu (FedaPay)</div>
+                                <div class="tl-time">13/11/2026 · 14:32</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <div class="tl-title">📧 Facture générée & envoyée</div>
+                                <div class="tl-time">13/11/2026 · 14:32</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <div class="tl-title">📦 Stock mis à jour (−1)</div>
+                                <div class="tl-time">13/11/2026 · 14:32</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <div class="tl-title">💬 Confirmation WhatsApp envoyée</div>
+                                <div class="tl-time">13/11/2026 · 14:32</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="invoice-btn" onclick="alert('📄 Facture PDF téléchargée (simulation)')">📄 Télécharger la facture PDF</button>
+            </div>
+        </div>
+
+        <!-- Bouton de retour en bas de page -->
+        <button class="admin-exit" onclick="goTo('screen-success')">← Quitter le back-office</button>
+    </div>
+</div>
+
+<script>
+    const state = {
+        qty: 1,
+        unitPrice: 25000,
+        shipping: 2000
+    };
+
+    function goTo(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        
+        if (screenId === 'screen-fedapay') {
+            const total = getTotal();
+            document.getElementById('fedapayAmount').textContent = formatFCFA(total);
+            document.getElementById('payBtnAmount').textContent = formatFCFA(total);
+        }
+    }
+
+    function formatFCFA(amount) {
+        return amount.toLocaleString('fr-FR').replace(/\u202f/g, ' ') + ' FCFA';
+    }
+
+    function getTotal() {
+        return (state.unitPrice * state.qty) + state.shipping;
+    }
+
+    function updateSummary() {
+        const subtotal = state.unitPrice * state.qty;
+        const total = subtotal + state.shipping;
+        document.getElementById('qtyValue').textContent = state.qty;
+        document.getElementById('summaryQty').textContent = state.qty;
+        document.getElementById('summarySubtotal').textContent = formatFCFA(subtotal);
+        document.getElementById('summaryTotal').textContent = formatFCFA(total);
+    }
+
+    function changeQty(delta) {
+        state.qty = Math.max(1, state.qty + delta);
+        updateSummary();
+    }
+
+    function selectPM(el) {
+        document.querySelectorAll('.pm-btn').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+    }
+
+    function confirmPayment() {
+        const name = document.getElementById('payName').value || 'Client';
+        const firstName = name.split(' ')[0];
+        const total = getTotal();
+        document.getElementById('successName').textContent = firstName;
+        document.getElementById('successQty').textContent = state.qty;
+        document.getElementById('successTotal').textContent = formatFCFA(total);
+        goTo('screen-success');
+    }
+
+    function resetDemo() {
+        state.qty = 1;
+        updateSummary();
+        goTo('screen-social');
+    }
+
+    function showAdminTab(tabId, btn) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if (btn && btn.classList.contains('admin-tab')) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+        }
+    }
+
+    function openOrderDetail(orderId) {
+        const orders = {
+            'CMD-2024-001': { client: 'Koffi Mensah', total: '27 000 FCFA' },
+            'CMD-2024-002': { client: 'Awa Diallo', total: '15 000 FCFA' },
+            'CMD-2024-003': { client: 'Jean Dupont', total: '45 000 FCFA' },
+            'CMD-2024-004': { client: 'Fatou Sow', total: '52 000 FCFA' }
+        };
+        const order = orders[orderId] || orders['CMD-2024-001'];
+        document.getElementById('detailOrderId').textContent = '#' + orderId;
+        document.getElementById('detailClient').textContent = order.client;
+        document.getElementById('detailTotal').textContent = order.total;
+        showAdminTab('tab-order-detail');
+    }
+
+    updateSummary();
+</script>
+
+</body>
+</html>
